@@ -1,7 +1,8 @@
 /*
-Save temperature and humidity in SD/microSD card every hour with HTU21D + SD/microSD module + Arduino
-Arduino measure temperature and humidity ech 10seconds, result is writen to SD card to the file measurements.csv
-WARNING: File and folder names can have only 8 characters and extsntion only 3 characters (old school names)
+Measures temperature and humidity with HTU21D + SD/microSD module + Arduino.
+Arduino measures temperature and humidity each 10seconds, the result is written to SD card to the file values.csv
+WARNING: File and folder names can have only 8 characters and extension only 3 characters (old school names)
+
 modified on 4 Dec 2021
 by Vladislav Korecky
 */
