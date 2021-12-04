@@ -1,37 +1,69 @@
-//Senzor teploty a vlhkosti HTU21D @I2C
-// připojení potřebných knihoven
+/*
+Save temperature and humidity in SD/microSD card every hour with HTU21D + SD/microSD module + Arduino
+Arduino measure temperature and humidity ech 10seconds, result is writen to SD card to the file measurements.csv
+WARNING: File and folder names can have only 8 characters and extsntion only 3 characters (old school names)
+modified on 4 Dec 2021
+by Vladislav Korecky
+*/
+
 #include <Wire.h>
 #include "SparkFunHTU21D.h"
+#include <SPI.h>
+#include <SD.h>
 
-// inicializace senzoru z knihovny
-HTU21D mujHTU;
+HTU21D HTU21Dsensor;  // HTU21D sensor initialization
+const int sd_CS = 10; // CS pin number on SD card
 
-void setup() {
-  // komunikace po sériové lince rychlostí 9600 baud
-  Serial.begin(9600);
-  // zahájení komunikace se senzorem
-  mujHTU.begin();
+void setup() {  
+  Wire.begin(); 
+    
+  // Setup of serial link communication
+  Serial.begin(9600); //  Speed 9600 baud
+  while (!Serial) {
+    ; // wait for serial port to connect. Needed for native USB port only
+  }
+
+  // Setup of communication with HTU21D sensor
+  HTU21Dsensor.begin();
+
+  // Setup of SD card module
+  if (!SD.begin(sd_CS))
+  {
+      Serial.println("ERROR: Initialization of SD card failed. SD card is not connected or card is corrupted.");
+      return;
+  }
+  Serial.println("SD card successfully initialized.");
+}
+
+void saveTemperatureAndHumidity() {
+  // Reading of temperature and humidity from HTU21D sensor
+  float temperature = HTU21Dsensor.readTemperature();
+  float humidity = HTU21Dsensor.readHumidity();
+  if (temperature > 125 | humidity > 100) {
+    Serial.println("ERROR: HTU21D communication error.");
+  } else {
+    // Print to Serial output
+    Serial.print(temperature, 1);
+    Serial.print("°C,");
+    Serial.print(humidity, 0);
+    Serial.print("%");
+    Serial.println();    
+    // Print to CSV File
+    File csvFile = SD.open("values.csv", FILE_WRITE);        
+    if (csvFile) {
+      csvFile.print(temperature, 1);
+      csvFile.print("°C,");
+      csvFile.print(humidity, 0);
+      csvFile.print("%");
+      csvFile.println();
+      csvFile.close();
+    } else {
+      Serial.println("ERROR: Can't write data to SD card.");
+    }
+  }
 }
 
 void loop() {
-  // načtení informací o teplotě a vlhkosti
-  // do proměnných
-  float teplota = mujHTU.readTemperature();
-  float vlhkost = mujHTU.readHumidity();
-  if (teplota > 125 | vlhkost > 100) {
-    Serial.println("Chyba komunikace se senzorem HTU21D!");
-  }
-  else {
-    // vytištění naměřených údajů, 1 ve výpisu označuje
-    // počet desetinných míst
-    Serial.print("HTU21D | Teplota: ");
-    Serial.print(teplota, 1);
-    Serial.print(" st C | ");
-    Serial.print("Vlhkost: ");
-    Serial.print(vlhkost, 1);
-    Serial.print("%");
-    Serial.println();
-  }
-  // pauza 1 sekunda mezi výpisy
-  delay(1000);
+  saveTemperatureAndHumidity();
+  delay(10000);
 }
